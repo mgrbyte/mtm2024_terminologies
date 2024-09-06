@@ -1,0 +1,7 @@
+accelerate
+bitsandbytes
+datasets
+langcodes
+transformers
+sacrebleu
+typer

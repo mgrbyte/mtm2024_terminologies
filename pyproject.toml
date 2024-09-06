@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["dependencies"]
+name = "mtm2024_terminologies"
+authors = [{ name = "Matt Russell", email = "m.russell@bangor.ac.uk" }]
+description = "Evaluate Mistral 7B instruct against WMT23 shared termonolgies task"
+readme = "README.md"
+requires-python = ">=3.11"
+version = "24.3.20"
+keywords = [
+    "LLM",
+    "Evaluation",
+    "Terminologiesh"
+]
+license = { text = "MIT" }
+classifiers = ["Framework :: Scrapy", "Programming Language :: Python :: 3"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+"Homepage" = "https://github.com/mgrbyte/mtm24-terminologies"
+"Bug Tracker" = "https://github.com/mgrbyte/mtm24-terminologies/issues"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
