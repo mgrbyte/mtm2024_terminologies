@@ -3,6 +3,7 @@ from pathlib import Path
 
 import datasets
 import langcodes
+import sacrebleu
 import typer
 from transformers import AutoTokenizer, MistralForCausalLM, PreTrainedModel, PreTrainedTokenizer
 from tqdm import tqdm
