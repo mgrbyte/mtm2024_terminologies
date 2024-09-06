@@ -1,4 +1,5 @@
 # import os
+from enum import Enum
 from pathlib import Path
 
 import datasets
@@ -22,10 +23,19 @@ def chatbot_translate(messages: list[dict[str, str]], model: PreTrainedModel, to
     outputs = model.generate(input_ids, max_new_tokens=20)
     rv =  tokenizer.decode(outputs[0], skip_special_tokens=True)
     return rv[rv.rfind(EOI) + len(EOI):].lstrip()
-    
 
+
+class TermType(str, Enum):
+    term: str = "term"
+    rand: str = "rand"
+    
 @app.command()
-def translate(outfile: Path, model_id: str = "mistralai/Mistral-7B-Instruct-v0.2") -> None:
+def translate(
+    outfile: Path, 
+    model_id: str = "mistralai/Mistral-7B-Instruct-v0.2",
+    term_type: TermType = "term",
+    verbose: bool = True
+) -> None:
     data = datasets.load_dataset("zouharvi/wmt-terminology-2023")["test"]
     translations = []
     model = MistralForCausalLM.from_pretrained(model_id, load_in_4bit=True, device_map="auto")
@@ -36,18 +46,23 @@ def translate(outfile: Path, model_id: str = "mistralai/Mistral-7B-Instruct-v0.2
         src = entry["src"]
         message = f"Translate the following {src_name} into {trg_name}: {src}."
         message += "You **MUST NOT** provide any explanation in the output other than the=translation itself. "
-        dict_entries_text = ", ".join(f"{terms[src_lang]} means {terms[trg_lang]}" for terms in entry["hints"]["term"])
+        dict_entries_text = ", ".join(
+            f"{terms[src_lang]} means {terms[trg_lang]}" 
+            for terms in entry["hints"][term_type]
+        )
         message += f"In this context, {dict_entries_text}. "
         message += f"The full translation in {trg_lang} is:"
         # response = complete(model=model, messages=[{"role": "user", "content": message}])
         messages = [{"role": "user", "content": message}]
         translation = chatbot_translate(messages, model, tokenizer)
-        if not translation:
-            print("Empty translation for:", messages)
-        else:
-            print(f"Translation for message {messages[0]['content']} was:", translation)
+        if verbose:
+            if not translation:
+                print("Empty translation for:", messages)
+            else:
+                print(f"Translation for message {messages[0]['content']} was:", translation)
         translations.append(translation)
-    print("Writing", len(translations), f"translations to {outfile}")
+    if verbose:
+        print("Writing", len(translations), f"translations to {outfile}")
     outfile.write_text("\n".join(translations))
 
 
@@ -58,8 +73,8 @@ def evaluate(hypotheses: Path) -> None:
     refs = [entry["ref"] for entry in data]
     chrf = sacrebleu.CHRF()
     bleu = sacrebleu.BLEU()
-    print(chrf.sentence_score(translations, refs))
-    print(bleu.sentence_score(translations, refs))
+    print(chrf.corpus_score(translations, refs))
+    print(bleu.corpus_score(translations, refs))
         
 
 if __name__ == "__main__":
